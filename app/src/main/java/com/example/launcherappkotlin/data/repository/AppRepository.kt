@@ -1,26 +1,76 @@
 package com.example.launcherappkotlin.data.repository
 
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import com.example.launcherappkotlin.data.local.ImageFileHelper
+import com.example.launcherappkotlin.data.local.LauncherPreferences
 import com.example.launcherappkotlin.data.local.dao.AppDao
+import com.example.launcherappkotlin.data.local.dao.IconOverrideDao
 import com.example.launcherappkotlin.data.local.entity.AppEntity
+import com.example.launcherappkotlin.data.local.entity.IconOverrideEntity
 import com.example.launcherappkotlin.data.model.AppInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class AppRepository(
     private val appDao: AppDao,
-    private val packageManager: PackageManager
+    private val iconOverrideDao: IconOverrideDao,
+    private val packageManager: PackageManager,
+    private val context: Context,
+    private val preferences: LauncherPreferences
 ) {
+
+    // ===== ĐỌC DANH SÁCH APP (có icon custom nếu có) =====
     fun observeApps(): Flow<List<AppInfo>> {
-        return appDao.observeAll()
-            .map { entities -> entities.map { it.toAppInfo() } }
-            .flowOn(Dispatchers.IO)
+        return combine(
+            appDao.observeAll(),
+            iconOverrideDao.observeAll()
+        ) { entities, overrides ->
+            val overrideMap = overrides.associateBy { it.componentKey }
+            entities.map { entity ->
+                entity.toAppInfo(overrideMap[entity.componentKey])
+            }
+        }.flowOn(Dispatchers.IO)
     }
 
+    // ===== WALLPAPER =====
+    fun getWallpaperPath(): String? = preferences.getWallpaperPath()
+
+    suspend fun setWallpaper(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        val file = File(context.filesDir, "wallpaper.jpg")
+        if (!ImageFileHelper.copyToInternal(context, uri, file)) return@withContext false
+        preferences.setWallpaperPath(file.absolutePath)
+        true
+    }
+
+    // ===== ICON CUSTOM =====
+    suspend fun setCustomIcon(componentKey: String, uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        val safeKey = componentKey.replace("/", "_")
+        val file = File(context.filesDir, "icons/$safeKey.jpg")
+        if (!ImageFileHelper.copyToInternal(context, uri, file)) return@withContext false
+        iconOverrideDao.upsert(
+            IconOverrideEntity(
+                componentKey = componentKey,
+                iconPath = file.absolutePath
+            )
+        )
+        true
+    }
+
+    suspend fun clearCustomIcon(componentKey: String) = withContext(Dispatchers.IO) {
+        iconOverrideDao.delete(componentKey)
+        val safeKey = componentKey.replace("/", "_")
+        File(context.filesDir, "icons/$safeKey.jpg").delete()
+    }
+
+    // ===== SYNC APP (giữ nguyên logic cũ) =====
     suspend fun syncInstalledApps() = withContext(Dispatchers.IO) {
         val fromSystem = queryLauncherApps()
         appDao.replaceAll(fromSystem)
@@ -43,19 +93,25 @@ class AppRepository(
             }
     }
 
-    private fun AppEntity.toAppInfo(): AppInfo {
-        val icon = try {
+    // ===== CHUYỂN Entity → AppInfo (ưu tiên icon custom) =====
+    private fun AppEntity.toAppInfo(override: IconOverrideEntity?): AppInfo {
+        val customIcon = override?.iconPath?.let {
+            ImageFileHelper.loadDrawable(context, it)
+        }
+        val icon = customIcon ?: try {
             packageManager.getActivityIcon(
-                android.content.ComponentName(packageName, activityName)
+                ComponentName(packageName, activityName)
             )
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             packageManager.defaultActivityIcon
         }
         return AppInfo(
             label = label,
             packageName = packageName,
             activityName = activityName,
-            icon = icon
+            icon = icon,
+            componentKey = componentKey,
+            hasCustomIcon = customIcon != null
         )
     }
 }

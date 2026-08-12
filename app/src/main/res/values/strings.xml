@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">LauncherAppKotlin</string>
+    <string name="wallpaper_desc">Hình nền launcher</string>
+    <string name="change_wallpaper">Đổi hình nền</string>
+    <string name="change_icon">Đổi icon</string>
+    <string name="reset_icon">Dùng icon gốc</string>
+    <string name="cancel">Hủy</string>
 </resources>

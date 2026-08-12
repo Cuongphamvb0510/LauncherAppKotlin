@@ -9,7 +9,8 @@ import com.example.launcherappkotlin.data.model.AppInfo
 import com.example.launcherappkotlin.databinding.ItemAppBinding
 
 class AppGridAdapter(
-    private val onClick: (AppInfo) -> Unit
+    private val onClick: (AppInfo) -> Unit,
+    private val onLongClick: (AppInfo) -> Unit
 ) : ListAdapter<AppInfo, AppGridAdapter.AppViewHolder>(DiffCallback) {
 
     class AppViewHolder(
@@ -30,13 +31,17 @@ class AppGridAdapter(
         holder.binding.ivIcon.setImageDrawable(app.icon)
         holder.binding.tvLabel.text = app.label
         holder.binding.root.setOnClickListener { onClick(app) }
+        holder.binding.root.setOnLongClickListener {
+            onLongClick(app)
+            true
+        }
     }
 
     private object DiffCallback : DiffUtil.ItemCallback<AppInfo>() {
         override fun areItemsTheSame(old: AppInfo, new: AppInfo) =
             old.packageName == new.packageName && old.activityName == new.activityName
         override fun areContentsTheSame(old: AppInfo, new: AppInfo) =
-            old.label == new.label
+            old.label == new.label && old.hasCustomIcon == new.hasCustomIcon
     }
 
 }
