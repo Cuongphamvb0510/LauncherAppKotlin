@@ -3,4 +3,6 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="launcher_background">#FF1A1A2E</color>
+    <color name="theme_summer_label">#FFFFD54F</color>
+    <color name="theme_winter_label">#FFB3E5FC</color>
 </resources>

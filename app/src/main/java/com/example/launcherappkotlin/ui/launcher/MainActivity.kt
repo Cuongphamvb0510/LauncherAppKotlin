@@ -29,8 +29,9 @@ class MainActivity : AppCompatActivity() {
     private var pendingIconApp: AppInfo? = null
     private val viewModel: LauncherViewModel by viewModels {
         val app = application as LauncherApp
-        LauncherViewModelFactory(app.appRepository)
+        LauncherViewModelFactory(app.appRepository, app.themeRepository)
     }
+
 
     private val pickWallpaper = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -76,6 +77,10 @@ class MainActivity : AppCompatActivity() {
             pickWallpaper.launch("image/*")
         }
 
+        binding.fabTheme.setOnClickListener {
+            viewModel.fetchThemeFromServer()
+        }
+
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
@@ -91,6 +96,11 @@ class MainActivity : AppCompatActivity() {
                             val bitmap = BitmapFactory.decodeFile(path)
                             binding.ivWallpaper.setImageBitmap(bitmap)
                         }
+                    }
+                }
+                launch {
+                    viewModel.currentTheme.collect { theme ->
+                        applyTheme(theme)
                     }
                 }
             }
@@ -124,6 +134,15 @@ class MainActivity : AppCompatActivity() {
     private fun openApp(app: AppInfo) {
         val launchIntent = packageManager.getLaunchIntentForPackage(app.packageName)
         if (launchIntent != null) startActivity(launchIntent)
+    }
+
+    private fun applyTheme(theme: String?) {
+        val labelColor = when (theme) {
+            "winter" -> getColor(R.color.theme_winter_label)
+            "summer" -> getColor(R.color.theme_summer_label)
+            else -> getColor(R.color.white)
+        }
+        adapter.setLabelColor(labelColor)
     }
 
 }

@@ -35,6 +35,7 @@ class AppGridAdapter(
             onLongClick(app)
             true
         }
+        labelColor?.let { holder.binding.tvLabel.setTextColor(it) }
     }
 
     private object DiffCallback : DiffUtil.ItemCallback<AppInfo>() {
@@ -42,6 +43,14 @@ class AppGridAdapter(
             old.packageName == new.packageName && old.activityName == new.activityName
         override fun areContentsTheSame(old: AppInfo, new: AppInfo) =
             old.label == new.label && old.hasCustomIcon == new.hasCustomIcon
+    }
+
+
+    private var labelColor: Int? = null
+
+    fun setLabelColor(color: Int) {
+        labelColor = color
+        notifyDataSetChanged()
     }
 
 }

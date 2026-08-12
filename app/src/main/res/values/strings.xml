@@ -5,4 +5,5 @@
     <string name="change_icon">Đổi icon</string>
     <string name="reset_icon">Dùng icon gốc</string>
     <string name="cancel">Hủy</string>
+    <string name="change_theme">Đổi theme từ server</string>
 </resources>

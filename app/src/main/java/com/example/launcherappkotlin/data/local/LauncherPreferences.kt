@@ -19,8 +19,17 @@ class LauncherPreferences(context: Context) {
             .apply()
     }
 
+    fun getThemeName(): String? = prefs.getString(KEY_THEME, null)
+
+    fun setThemeName(name: String?) {
+        prefs.edit().putString(KEY_THEME, name).apply()
+    }
+
+
     companion object {
         private const val PREFS_NAME = "launcher_prefs"
         private const val KEY_WALLPAPER = "wallpaper_path"
+        private const val KEY_THEME = "theme_name"
+
     }
 }

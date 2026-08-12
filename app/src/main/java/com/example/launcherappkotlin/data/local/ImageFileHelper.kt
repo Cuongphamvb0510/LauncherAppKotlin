@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import java.io.File
 import java.io.FileOutputStream
+import java.net.URL
 
 object ImageFileHelper {
     // copy ảnh từ Uri gallery → File nội bộ
@@ -33,6 +34,20 @@ object ImageFileHelper {
             BitmapDrawable(context.resources, bitmap)
         } catch (e: Exception) {
             null
+        }
+    }
+
+    fun downloadFromUrl(url: String, dest: File): Boolean {
+        return try {
+            dest.parentFile?.mkdirs()
+            URL(url).openStream().use { input ->
+                FileOutputStream(dest).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            false
         }
     }
 }

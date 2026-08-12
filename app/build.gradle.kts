@@ -55,4 +55,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.kotlinx.coroutines.android)
+
+    implementation(libs.nanohttpd)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
 }
