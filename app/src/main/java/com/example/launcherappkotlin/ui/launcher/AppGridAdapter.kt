@@ -2,14 +2,15 @@ package com.example.launcherappkotlin.ui.launcher
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.launcherappkotlin.data.model.AppInfo
 import com.example.launcherappkotlin.databinding.ItemAppBinding
 
 class AppGridAdapter(
-    private val apps: List<AppInfo>,
     private val onClick: (AppInfo) -> Unit
-) : RecyclerView.Adapter<AppGridAdapter.AppViewHolder>() {
+) : ListAdapter<AppInfo, AppGridAdapter.AppViewHolder>(DiffCallback) {
 
     class AppViewHolder(
         val binding: ItemAppBinding
@@ -25,11 +26,17 @@ class AppGridAdapter(
     }
 
     override fun onBindViewHolder(holder: AppViewHolder, position: Int) {
-        val app = apps[position]
+        val app = getItem(position)
         holder.binding.ivIcon.setImageDrawable(app.icon)
         holder.binding.tvLabel.text = app.label
         holder.binding.root.setOnClickListener { onClick(app) }
     }
 
-    override fun getItemCount(): Int = apps.size
+    private object DiffCallback : DiffUtil.ItemCallback<AppInfo>() {
+        override fun areItemsTheSame(old: AppInfo, new: AppInfo) =
+            old.packageName == new.packageName && old.activityName == new.activityName
+        override fun areContentsTheSame(old: AppInfo, new: AppInfo) =
+            old.label == new.label
+    }
+
 }

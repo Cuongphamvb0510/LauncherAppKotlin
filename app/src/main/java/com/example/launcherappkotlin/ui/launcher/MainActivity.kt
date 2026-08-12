@@ -4,16 +4,29 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.launcherappkotlin.LauncherApp
 import com.example.launcherappkotlin.data.model.AppInfo
 import com.example.launcherappkotlin.databinding.ActivityMainBinding
+import com.example.launcherappkotlin.viewmodel.LauncherViewModel
+import com.example.launcherappkotlin.viewmodel.LauncherViewModelFactory
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var adapter: AppGridAdapter
+    private val viewModel: LauncherViewModel by viewModels {
+        val app = application as LauncherApp
+        LauncherViewModelFactory(app.appRepository)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,31 +44,22 @@ class MainActivity : AppCompatActivity() {
             // không thoát launcher
         }
 
+        adapter = AppGridAdapter { openApp(it) }
         binding.rvApps.layoutManager = GridLayoutManager(this, 4)
-        val apps = loadInstalledApps()
-        binding.rvApps.adapter = AppGridAdapter(apps) { openApp(it) }
+        binding.rvApps.adapter = adapter
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.apps.collect { apps ->
+                    adapter.submitList(apps)
+                }
+            }
+        }
     }
 
-    private fun loadInstalledApps(): List<AppInfo> {
-        val pm = packageManager
-        val intent = Intent(Intent.ACTION_MAIN).apply {
-            addCategory(Intent.CATEGORY_LAUNCHER)
-        }
-        return pm.queryIntentActivities(intent, 0)
-            .map { resolveInfo ->
-                AppInfo(
-                    label = resolveInfo.loadLabel(pm).toString(),
-                    packageName = resolveInfo.activityInfo.packageName,
-                    activityName = resolveInfo.activityInfo.name,
-                    icon = resolveInfo.loadIcon(pm)
-                )
-            }
-            .sortedBy { it.label.lowercase() }
-    }
+
     private fun openApp(app: AppInfo) {
         val launchIntent = packageManager.getLaunchIntentForPackage(app.packageName)
-        if (launchIntent != null) {
-            startActivity(launchIntent)
-        }
+        if (launchIntent != null) startActivity(launchIntent)
     }
 }
