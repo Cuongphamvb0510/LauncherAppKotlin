@@ -63,6 +63,13 @@ class LauncherViewModel(
         }
     }
 
+    /** Đồng bộ lại list app (dùng khi quay về Home). */
+    fun syncApps() {
+        viewModelScope.launch {
+            repository.syncInstalledApps()
+        }
+    }
+
     fun fetchThemeFromServer() {
         viewModelScope.launch {
             themeRepository.fetchAndApplyTheme()
@@ -72,6 +79,21 @@ class LauncherViewModel(
                     publishWallpaper(repository.getWallpaperPath())
                 }
             // lỗi thì tạm bỏ qua (sau này có thể hiện Toast)
+        }
+    }
+
+    /** Reset wallpaper, theme label, và mọi icon custom về mặc định. */
+    fun resetThemeAndIcons() {
+        viewModelScope.launch {
+            repository.clearAllCustomIcons()
+            repository.clearWallpaper()
+            themeRepository.clearTheme()
+            // Force emit nếu đang null (StateFlow bỏ qua giá trị trùng)
+            if (_currentTheme.value == null) {
+                _currentTheme.value = ""
+            }
+            _currentTheme.value = null
+            publishWallpaper(null)
         }
     }
 

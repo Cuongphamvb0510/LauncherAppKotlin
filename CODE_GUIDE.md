@@ -593,7 +593,7 @@ Giữ **cùng pattern** project đang dùng (UI → ViewModel → Repository →
 ### 12.2 Gợi ý theo loại tính năng
 
 #### A) Tính năng chỉ lưu local (vd: sắp xếp app, ẩn app)
-
+ 
 ```
 1. Entity + Dao (hoặc thêm cột Entity cũ + Migration)
 2. Repository: observe + update

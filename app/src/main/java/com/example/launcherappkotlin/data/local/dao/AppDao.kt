@@ -16,6 +16,10 @@ interface AppDao {
     suspend fun insertAll(apps: List<AppEntity>)
     @Query("DELETE FROM installed_apps")
     suspend fun deleteAll()
+
+    @Query("DELETE FROM installed_apps WHERE packageName = :packageName")
+    suspend fun deleteByPackageName(packageName: String)
+
     @Transaction
     suspend fun replaceAll(apps: List<AppEntity>) {
         deleteAll()

@@ -72,10 +72,32 @@ class AppRepository(
         File(context.filesDir, "icons/$safeKey.jpg").delete()
     }
 
-    // ===== SYNC APP (giữ nguyên logic cũ) =====
+    /** Xóa mọi icon custom + file trong filesDir/icons. */
+    suspend fun clearAllCustomIcons() = withContext(Dispatchers.IO) {
+        iconOverrideDao.deleteAll()
+        File(context.filesDir, "icons").deleteRecursively()
+    }
+
+    /** Xóa wallpaper đã lưu, về nền mặc định. */
+    suspend fun clearWallpaper() = withContext(Dispatchers.IO) {
+        preferences.setWallpaperPath(null)
+        File(context.filesDir, "wallpaper.jpg").delete()
+    }
+
+    // ===== SYNC APP =====
     suspend fun syncInstalledApps() = withContext(Dispatchers.IO) {
         val fromSystem = queryLauncherApps()
         appDao.replaceAll(fromSystem)
+    }
+
+    /** Gỡ app: xóa ngay khỏi Room (+ icon custom) để UI cập nhật realtime. */
+    suspend fun removePackage(packageName: String) = withContext(Dispatchers.IO) {
+        appDao.deleteByPackageName(packageName)
+        iconOverrideDao.deleteByComponentPattern("$packageName/%")
+        // File icon: componentKey "pkg/activity" → "pkg_activity.jpg"
+        File(context.filesDir, "icons").listFiles()
+            ?.filter { it.name.startsWith("${packageName}_") }
+            ?.forEach { it.delete() }
     }
 
     private fun queryLauncherApps(): List<AppEntity> {

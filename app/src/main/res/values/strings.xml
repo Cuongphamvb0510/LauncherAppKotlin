@@ -6,4 +6,8 @@
     <string name="reset_icon">Dùng icon gốc</string>
     <string name="cancel">Hủy</string>
     <string name="change_theme">Đổi theme từ server</string>
+    <string name="reset_appearance">Reset theme &amp; icon</string>
+    <string name="reset_appearance_title">Reset về mặc định?</string>
+    <string name="reset_appearance_message">Xóa hình nền, theme và toàn bộ icon custom.</string>
+    <string name="reset">Reset</string>
 </resources>

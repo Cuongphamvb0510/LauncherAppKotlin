@@ -19,4 +19,10 @@ interface IconOverrideDao {
     // Xóa override → app về icon gốc
     @Query("DELETE FROM icon_overrides WHERE componentKey = :componentKey")
     suspend fun delete(componentKey: String)
+
+    @Query("DELETE FROM icon_overrides")
+    suspend fun deleteAll()
+
+    @Query("DELETE FROM icon_overrides WHERE componentKey LIKE :pattern")
+    suspend fun deleteByComponentPattern(pattern: String)
 }

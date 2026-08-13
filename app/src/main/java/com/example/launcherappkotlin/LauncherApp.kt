@@ -8,12 +8,14 @@ import com.example.launcherappkotlin.data.local.LauncherPreferences
 import com.example.launcherappkotlin.data.remote.ThemeServer
 import com.example.launcherappkotlin.data.repository.AppRepository
 import com.example.launcherappkotlin.data.repository.ThemeRepository
+import com.example.launcherappkotlin.receiver.PackageMonitor
 import fi.iki.elonen.NanoHTTPD.SOCKET_READ_TIMEOUT
 
 class LauncherApp : Application() {
     val database by lazy { AppDatabase.getInstance(this) }
     val preferences by lazy { LauncherPreferences(this) }
     private var themeServer: ThemeServer? = null
+    private var packageMonitor: PackageMonitor? = null
 
     val themeApi: ThemeApi by lazy { NetworkModule.themeApi }
 
@@ -39,5 +41,8 @@ class LauncherApp : Application() {
         super.onCreate()
         themeServer = ThemeServer()
         themeServer?.start(SOCKET_READ_TIMEOUT, false)
+
+        // Realtime cài/gỡ app (chuẩn cho launcher)
+        packageMonitor = PackageMonitor(this).also { it.start() }
     }
 }

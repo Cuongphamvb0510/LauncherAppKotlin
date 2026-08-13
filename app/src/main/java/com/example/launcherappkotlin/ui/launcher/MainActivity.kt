@@ -81,6 +81,10 @@ class MainActivity : AppCompatActivity() {
             viewModel.fetchThemeFromServer()
         }
 
+        binding.fabReset.setOnClickListener {
+            confirmResetAppearance()
+        }
+
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
@@ -106,6 +110,23 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Backup: sync khi quay về launcher (sau khi gỡ/cài app ở màn khác)
+        viewModel.syncApps()
+    }
+
+    private fun confirmResetAppearance() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.reset_appearance_title)
+            .setMessage(R.string.reset_appearance_message)
+            .setPositiveButton(R.string.reset) { _, _ ->
+                viewModel.resetThemeAndIcons()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun showIconOptions(app: AppInfo) {

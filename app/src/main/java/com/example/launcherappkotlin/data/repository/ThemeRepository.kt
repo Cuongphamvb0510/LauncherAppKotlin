@@ -16,6 +16,10 @@ class ThemeRepository(
 ) {
     fun getCurrentTheme(): String? = preferences.getThemeName()
 
+    suspend fun clearTheme() = withContext(Dispatchers.IO) {
+        preferences.setThemeName(null)
+    }
+
     suspend fun fetchAndApplyTheme(): Result<ThemeResponse> = withContext(Dispatchers.IO) {
         try {
             // 1. Gọi API lấy theme info
