@@ -89,11 +89,11 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 launch {
-                    viewModel.wallpaperPath.collect { path ->
-                        if (path == null) {
+                    viewModel.wallpaper.collect { state ->
+                        if (state.path == null) {
                             binding.ivWallpaper.setImageDrawable(null)
                         } else {
-                            val bitmap = BitmapFactory.decodeFile(path)
+                            val bitmap = BitmapFactory.decodeFile(state.path)
                             binding.ivWallpaper.setImageBitmap(bitmap)
                         }
                     }

@@ -42,7 +42,9 @@ class AppGridAdapter(
         override fun areItemsTheSame(old: AppInfo, new: AppInfo) =
             old.packageName == new.packageName && old.activityName == new.activityName
         override fun areContentsTheSame(old: AppInfo, new: AppInfo) =
-            old.label == new.label && old.hasCustomIcon == new.hasCustomIcon
+            old.label == new.label &&
+                old.hasCustomIcon == new.hasCustomIcon &&
+                old.iconRevision == new.iconRevision
     }
 
 

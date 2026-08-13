@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/** Path alone is not enough: wallpaper is always saved as the same file. */
+data class WallpaperUiState(val path: String?, val version: Long = 0L)
+
 class LauncherViewModel(
     private val repository: AppRepository,
     private val themeRepository: ThemeRepository
@@ -25,8 +28,8 @@ class LauncherViewModel(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = emptyList()
         )
-    private val _wallpaperPath = MutableStateFlow<String?>(null)
-    val wallpaperPath: StateFlow<String?> = _wallpaperPath.asStateFlow()
+    private val _wallpaper = MutableStateFlow(WallpaperUiState(null))
+    val wallpaper: StateFlow<WallpaperUiState> = _wallpaper.asStateFlow()
 
     private val _currentTheme = MutableStateFlow<String?>(null)
     val currentTheme: StateFlow<String?> = _currentTheme.asStateFlow()
@@ -34,8 +37,8 @@ class LauncherViewModel(
     init {
         // Sync nền — UI đã hiện từ Room trước đó
         viewModelScope.launch {
-            _wallpaperPath.value = repository.getWallpaperPath()
-            _currentTheme.value = themeRepository.getCurrentTheme()  // ← THÊM DÒNG NÀ
+            publishWallpaper(repository.getWallpaperPath())
+            _currentTheme.value = themeRepository.getCurrentTheme()
             repository.syncInstalledApps()
         }
     }
@@ -43,7 +46,7 @@ class LauncherViewModel(
     fun setWallpaper(uri: Uri) {
         viewModelScope.launch {
             if (repository.setWallpaper(uri)) {
-                _wallpaperPath.value = repository.getWallpaperPath()
+                publishWallpaper(repository.getWallpaperPath())
             }
         }
     }
@@ -64,12 +67,17 @@ class LauncherViewModel(
         viewModelScope.launch {
             themeRepository.fetchAndApplyTheme()
                 .onSuccess { theme ->
-                    // API thành công → cập nhật 2 StateFlow
                     _currentTheme.value = theme.theme
-                    _wallpaperPath.value = repository.getWallpaperPath()
+                    // Force re-emit even when theme name / file path are unchanged
+                    publishWallpaper(repository.getWallpaperPath())
                 }
             // lỗi thì tạm bỏ qua (sau này có thể hiện Toast)
         }
+    }
+
+    private fun publishWallpaper(path: String?) {
+        // StateFlow skips equal values; bump version so UI reloads the same path
+        _wallpaper.value = WallpaperUiState(path, System.nanoTime())
     }
 }
 

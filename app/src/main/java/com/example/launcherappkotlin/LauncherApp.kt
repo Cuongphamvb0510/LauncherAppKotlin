@@ -1,6 +1,7 @@
 package com.example.launcherappkotlin
 
 import android.app.Application
+import com.example.launcherappkotlin.data.api.NetworkModule
 import com.example.launcherappkotlin.data.api.ThemeApi
 import com.example.launcherappkotlin.data.local.AppDatabase
 import com.example.launcherappkotlin.data.local.LauncherPreferences
@@ -8,21 +9,14 @@ import com.example.launcherappkotlin.data.remote.ThemeServer
 import com.example.launcherappkotlin.data.repository.AppRepository
 import com.example.launcherappkotlin.data.repository.ThemeRepository
 import fi.iki.elonen.NanoHTTPD.SOCKET_READ_TIMEOUT
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 class LauncherApp : Application() {
     val database by lazy { AppDatabase.getInstance(this) }
     val preferences by lazy { LauncherPreferences(this) }
     private var themeServer: ThemeServer? = null
 
-    val themeApi: ThemeApi by lazy {
-        Retrofit.Builder()
-            .baseUrl("http://127.0.0.1:8080/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ThemeApi::class.java)
-    }
+    val themeApi: ThemeApi by lazy { NetworkModule.themeApi }
+
     val themeRepository by lazy {
         ThemeRepository(
             themeApi = themeApi,
@@ -46,6 +40,4 @@ class LauncherApp : Application() {
         themeServer = ThemeServer()
         themeServer?.start(SOCKET_READ_TIMEOUT, false)
     }
-
-
 }

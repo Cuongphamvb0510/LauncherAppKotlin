@@ -11,4 +11,6 @@ data class AppInfo(
     val icon: Drawable,
     val componentKey: String = "$packageName/$activityName",
     val hasCustomIcon: Boolean = false,
+    /** Đổi khi file icon custom được ghi đè (path cố định). */
+    val iconRevision: Long = 0L,
 )

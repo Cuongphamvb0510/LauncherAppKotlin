@@ -1,18 +1,16 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "com.example.launcherappkotlin"
-    compileSdk {
-        version = release(37) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
     defaultConfig {
@@ -23,18 +21,31 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Mock local server (NanoHTTPD). Đổi sang HTTPS production khi có backend thật.
+        buildConfigField("String", "BASE_URL", "\"http://127.0.0.1:8080/\"")
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"http://127.0.0.1:8080/\"")
+        }
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            // Ví dụ production — thay bằng domain thật của bạn
+            buildConfigField("String", "BASE_URL", "\"https://api.example.com/\"")
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = "11"
     }
 }
 
@@ -57,6 +68,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.nanohttpd)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
 }

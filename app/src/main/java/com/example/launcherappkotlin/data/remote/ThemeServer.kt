@@ -7,12 +7,17 @@ import org.json.JSONObject
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
+/**
+ * Mock backend local (port 8080) — giống REST thật:
+ * - GET /api/v1/theme
+ * - GET /wallpaper.jpg
+ */
 class ThemeServer : NanoHTTPD(8080) {
 
     override fun serve(session: IHTTPSession): Response {
         return when (session.uri) {
 
-            "/theme" -> {
+            "/api/v1/theme" -> {
                 val json = JSONObject()
                     .put("theme", "summer")
                     .put("wallpaper", "http://127.0.0.1:8080/wallpaper.jpg")

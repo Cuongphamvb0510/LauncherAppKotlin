@@ -55,6 +55,8 @@ class AppRepository(
         val safeKey = componentKey.replace("/", "_")
         val file = File(context.filesDir, "icons/$safeKey.jpg")
         if (!ImageFileHelper.copyToInternal(context, uri, file)) return@withContext false
+        // Touch mtime so DiffUtil sees a new iconRevision even if path is unchanged
+        file.setLastModified(System.currentTimeMillis())
         iconOverrideDao.upsert(
             IconOverrideEntity(
                 componentKey = componentKey,
@@ -95,7 +97,8 @@ class AppRepository(
 
     // ===== CHUYỂN Entity → AppInfo (ưu tiên icon custom) =====
     private fun AppEntity.toAppInfo(override: IconOverrideEntity?): AppInfo {
-        val customIcon = override?.iconPath?.let {
+        val iconFile = override?.iconPath?.let { File(it) }?.takeIf { it.exists() }
+        val customIcon = iconFile?.absolutePath?.let {
             ImageFileHelper.loadDrawable(context, it)
         }
         val icon = customIcon ?: try {
@@ -111,7 +114,8 @@ class AppRepository(
             activityName = activityName,
             icon = icon,
             componentKey = componentKey,
-            hasCustomIcon = customIcon != null
+            hasCustomIcon = customIcon != null,
+            iconRevision = iconFile?.lastModified() ?: 0L
         )
     }
 }

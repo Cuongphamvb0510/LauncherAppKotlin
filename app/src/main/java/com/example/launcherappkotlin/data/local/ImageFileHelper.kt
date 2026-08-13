@@ -5,29 +5,27 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import com.example.launcherappkotlin.data.api.NetworkModule
+import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
-import java.net.URL
 
 object ImageFileHelper {
     // copy ảnh từ Uri gallery → File nội bộ
     fun copyToInternal(context: Context, uri: Uri, dest: File): Boolean {
         return try {
-            // Tạo folder cha nếu chưa có (vd: files/icons/)
             dest.parentFile?.mkdirs()
-            // Mở stream đọc từ gallery
             context.contentResolver.openInputStream(uri)?.use { input ->
-                // Ghi ra file nội bộ
                 FileOutputStream(dest).use { output ->
                     input.copyTo(output)
                 }
-            } ?: return false  // openInputStream trả null = thất bại
-            true  // copy thành công
-        } catch(e: Exception) {
+            } ?: return false
+            true
+        } catch (e: Exception) {
             false
         }
     }
-    // đọc file → Drawable để gắn vào ImageView
+
     fun loadDrawable(context: Context, path: String): Drawable? {
         return try {
             val bitmap = BitmapFactory.decodeFile(path) ?: return null
@@ -37,12 +35,16 @@ object ImageFileHelper {
         }
     }
 
+    /** Tải ảnh qua OkHttp (cùng client/timeout/logging với Retrofit). */
     fun downloadFromUrl(url: String, dest: File): Boolean {
         return try {
             dest.parentFile?.mkdirs()
-            URL(url).openStream().use { input ->
+            val request = Request.Builder().url(url).get().build()
+            NetworkModule.okHttpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return false
+                val body = response.body ?: return false
                 FileOutputStream(dest).use { output ->
-                    input.copyTo(output)
+                    body.byteStream().use { input -> input.copyTo(output) }
                 }
             }
             true
